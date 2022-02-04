@@ -1,0 +1,134 @@
+<div class="row">
+    <table class="table table-striped table-hover table-sm">
+        <thead class="table-head">
+            <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Paragraph #</th>
+                <th scope="col" sortable="match_probability" (sort)="onSort($event)">Match Probability (%)</th>
+                <th scope="col">Manually Tagged</th>
+                <th scope="col">See More</th>
+                <th scope="col">Tags</th>
+                <th scope="col">Tag Cluster</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let cluster of clusters | slice: (page-1) * pageSize : page * pageSize; let i = index; "
+                [class.active]="cluster.id == HighlightRow">
+                <td (click)="clusterDetail(cluster)">{{cluster.id}}</td>
+                <td (click)="clusterDetail(cluster)">{{cluster.number_of_paragraphs}}</td>
+                <td (click)="clusterDetail(cluster)">{{cluster.match_probability?cluster.match_probability:'-'}}</td>
+                <td (click)="clusterDetail(cluster)">{{cluster.manually_tagged}}</td>
+                <td>
+                    <img class="icon-size" [src]="paragraphsIconSrc" title="{{paragraphsTitleTxt}}"
+                        (click)="triggerModal(modalData)">
+                    &nbsp;&nbsp;
+                    <!-- <img class="icon-size" [src]="wordCloudIconSrc" title="{{wordCloudTxt}}"
+                    (click)="clusterDetail(cluster)"> -->
+                </td>
+                <td (click)="clusterDetail(cluster)">{{cluster.tags?cluster.tags:'-'}}</td>
+                <td>
+                    <div class="input-group">
+                        <select class="custom-select" [(ngModel)]="selectedTag[cluster.id]">
+                            <!-- <option [ngValue]="null" disabled>Choose...</option> -->
+                            <option [ngValue]="tag" *ngFor="let tag of tags">{{tag}}</option>
+                        </select>
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="button" (click)="tagCluster(cluster.id)"
+                                [disabled]="loadingTaggingCluster">Submit</button>
+                        </div>
+                    </div>
+                </td>
+                <ng-template #modalData let-modal>
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="modal-basic-title">Cluster #{{cluster.id}} Paragraphs</h4>
+                        <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('Cross click')">
+                            <span aria-hidden="true">×</span>
+                        </button>
+                    </div>
+                    <div class="modal-body" style="overflow-y: scroll; height: 400px;">
+                        <p style="background: #cc001e; color: white;"
+                            *ngFor="let paragraph of cluster.paragraphs; let j = index">
+                            <b>{{j+1}}- </b>{{paragraph}}
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" (click)="modal.close('Save click')">Close</button>
+                    </div>
+                </ng-template>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<div class="row ">
+    <div class="col-md-12">
+        <flash-messages class="text-center"></flash-messages>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-9">
+        <ngb-pagination [(page)]="page" [maxSize]="maxSize" [pageSize]="pageSize" [collectionSize]="clusters.length">
+        </ngb-pagination>
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-outline-secondary" type="button" (click)="openTagPopup(modalData1)">Add Tag</button>
+    </div>
+    <ng-template #modalData1 let-modal>
+        <div class="modal-header">
+            <h4 class="modal-title" id="modal-basic-title">Add Tag</h4>
+            <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('Cross click')">
+                <span aria-hidden="true">×</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form #tagForm="ngForm" (ngSubmit)="tagForm.form.valid && addTag()" novalidate>
+                <div class="form-group">
+                    <input type="text" [(ngModel)]="customeTag" ngModel class="form-control" id="tag"
+                        aria-describedby="tagHelp" placeholder="Enter tag name" name="tag" required #tag="ngModel"
+                        pattern=".*\S+.*">
+                    <small id="tagHelp" class="form-text text-danger"
+                        *ngIf="error.statuscode">{{error.message}}</small>
+                    <ng-template *ngIf="(tag.touched || tagForm.submitted) && tag.errors?.['required']" class="alert">
+                        <small id="tagHelp" class="form-text text-danger">Name is
+                            required.</small>
+                    </ng-template>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <button type="submit" [disabled]="addingTag" class="btn btn-primary">Submit</button>
+                    </div>
+                    <div class="col-sm-6">
+                        <button type="button" class="btn btn-danger float-right"
+                            (click)="modal.close('Save click')">Close</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+    </ng-template>
+    <div class="col-md-1" style="padding-left: 0px;">
+        <button class="btn btn-outline-secondary" type="button" (click)="reset()">Reset</button>
+    </div>
+</div>
+<div class="row">
+    <div class="col" style="border: 1px solid; color: #cc001e;">
+        <h6 class="text-center">Iterations VS Avg Match Probability </h6>
+        <ng-container *ngIf="!graphSrc && !loadingTaggingCluster">
+            <p>No iteration found</p>
+        </ng-container>
+        <ng-container *ngIf="graphSrc || loadingTaggingCluster">
+            <img height="269px" *ngIf="!loadingTaggingCluster else loadingSpinner" width="100%"
+                src="data:image/png;base64,{{graphSrc}}">
+            <ng-template #loadingSpinner>
+                <img width="100%" height="269px" [src]="loaderSrc">
+            </ng-template>
+        </ng-container>
+    </div>
+    <div class="col" style="border: 1px solid; color: #cc001e;">
+        <h6 class="text-center">Word Cloud #{{selectedCluster.id}} </h6>
+        <img height="269px" *ngIf="!loadingClusterWordCloud else loadingSpinner" width="100%"
+            src="data:image/png;base64,{{clusterWordCloud}}">
+        <ng-template #loadingSpinner>
+            <img width="100%" height="269px" [src]="loaderSrc">
+        </ng-template>
+    </div>
+</div>

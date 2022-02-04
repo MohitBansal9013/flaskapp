@@ -1,0 +1,20 @@
+.table tr.active td {  
+    background-color:#e654696b !important;  
+    color: white;  
+  }  
+
+.icon-size{
+    height:25px;
+    width:25px;
+}
+
+.table-head{
+    background: #cc001e;
+    color: white
+}
+
+::ng-deep .my-class .modal-dialog { 
+    /* max-width: 25%; */
+    width: 25%;
+    height: 170px !important;
+}
