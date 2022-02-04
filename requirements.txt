@@ -1,4 +1,4 @@
-Flask>=1.0,<=1.1.2
+Flask
 opencv-python--headless
 tensorflow
 imutils
@@ -14,9 +14,3 @@ kaleido
 gensim
 wordcloud
 nltk
-click==8.0.3
-colorama==0.4.4
-itsdangerous==2.0.1
-Jinja2==3.0.3
-MarkupSafe==2.0.1
-Werkzeug==2.0.2
